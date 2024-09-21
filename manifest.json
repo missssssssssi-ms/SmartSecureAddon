@@ -1,8 +1,8 @@
 {
  "name": "SmartSecure",
- "version": "1.0.0",
+ "version": "1.2.1",
  "manifest_version": 3,
- "description": "より安全にChromeを利用できるようにします｡",
+ "description": "より安全にChromeを利用できるようにします｡この拡張機能はタイトルの変更や､テキストの置き換えなどをサポートします｡",
  "permissions": [
   "tabs",
   "scripting",
@@ -11,8 +11,11 @@
 "action": {
  "default_popup": "popup.html"
 },
+"background": {
+    "service_worker": "background.js"
+  },
  "content_scripts": [{
   "matches": ["<all_urls>"],
-  "js": ["title.js"]
+  "js": ["content.js"]
  }]
 }

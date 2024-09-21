@@ -1,24 +1,47 @@
 <!DOCTYPE html>
 <html>
   <head>
-   <meta charset="UTF-8">
-    <title>Title Changer Settings</title>
+    <title>Settings</title>
     <style>
-      body { font-family: Arial, sans-serif; width: 200px; }
+      body { font-family: Arial, sans-serif; width: 700px; }
       label { display: block; margin-bottom: 10px; }
+      .replace-pair { margin-bottom: 10px; }
+      .replace-pair div { display: flex; align-items: center; }
+      .replace-pair input { margin-right: 5px; }
     </style>
   </head>
   <body>
-    <h3>Change Page Title</h3>
+    <h3>実行オプション</h3>
+    <p>設定は､保存後に更新すると適応されます｡</p>
+    <h4>タイトル変更</h4>
+    <!-- 現在のドメインを表示 -->
+    <div id="domainDisplay" style="font-weight: bold;"></div>
+
+    <!-- タイトル変更の設定 -->
     <label>
       <input type="checkbox" id="titleChangeCheckbox" />
-      Enable title change
+      タイトル上書きを有効化
     </label>
-    <label>
-      New Title: 
-      <input type="text" id="newTitle" placeholder="Enter title" />
-    </label>
-    <button id="saveButton">Save</button>
+
+    <!-- タイトル変更のラジオボタン -->
+    <div id="titleOptions">
+      <label>
+        <input type="radio" name="titleOption" value="custom" checked />
+        カスタムタイトル:
+        <input type="text" id="newTitle" placeholder="サイトのタイトル..." />
+      </label>
+      <label>
+        <input type="radio" name="titleOption" value="template" />
+        テンプレートをタイトルとして使う
+      </label>
+    </div>
+    <h4>テキスト変更ルール</h4>
+    <!-- テキスト置き換えの設定 -->
+    <div id="replacePairs"></div>
+    <button id="addPairButton">ルールを追加</button>
+
+    <button id="saveButton">保存</button>
+
     <script src="popup.js"></script>
   </body>
 </html>

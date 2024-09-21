@@ -1,23 +1,107 @@
-// ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ã®å†…å®¹ã‚’èª­ã¿è¾¼ã‚“ã ã¨ãã«ç¾åœ¨ã®è¨­å®šã‚’åæ˜ 
-document.addEventListener('DOMContentLoaded', function() {
- const checkbox = document.getElementById('titleChangeCheckbox');
- const newTitleInput = document.getElementById('newTitle');
- const saveButton = document.getElementById('saveButton');
+document.addEventListener('DOMContentLoaded', function () {
+ let currentDomain = '';
 
- // ã‚¹ãƒˆãƒ¬ãƒ¼ã‚¸ã‹ã‚‰ç¾åœ¨ã®è¨­å®šã‚’å–å¾—ã—ã¦åæ˜ 
- chrome.storage.sync.get(['titleChangeEnabled', 'customTitle'], function(data) {
-   checkbox.checked = data.titleChangeEnabled || false;
-   newTitleInput.value = data.customTitle || '';  // ã‚«ã‚¹ã‚¿ãƒ ã‚¿ã‚¤ãƒˆãƒ«ãŒã‚ã‚Œã°è¡¨ç¤º
+ // Œ»İ‚Ìƒ^ƒu‚ÌƒhƒƒCƒ“‚ğæ“¾
+ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+   const url = new URL(tabs[0].url);
+   currentDomain = url.hostname; // ƒhƒƒCƒ“–¼‚Ìæ“¾
+   document.getElementById('domainDisplay').textContent = `İ’è‚Ì‘ÎÛ: ${currentDomain}`;
+
+   // ƒhƒƒCƒ“‚²‚Æ‚Ìİ’è‚ğƒXƒgƒŒ[ƒW‚©‚çæ“¾‚µ‚Ä”½‰f
+   chrome.storage.sync.get([currentDomain, 'globalSettings'], function (data) {
+     const settings = data[currentDomain] || {};
+     const globalSettings = data['globalSettings'] || [];
+
+     // ƒ^ƒCƒgƒ‹•ÏX‚Ìİ’è‚ğ”½‰f
+     document.getElementById('titleChangeCheckbox').checked = settings.titleChangeEnabled || false;
+     document.getElementById('newTitle').value = settings.customTitle || '';
+     
+     // ƒ‰ƒWƒIƒ{ƒ^ƒ“‚Ìİ’è‚ğ”½‰f
+     if (settings.titleOption === 'template') {
+       document.querySelector('input[name="titleOption"][value="template"]').checked = true;
+     } else {
+       document.querySelector('input[name="titleOption"][value="custom"]').checked = true; // ƒfƒtƒHƒ‹ƒg‚ÍƒJƒXƒ^ƒ€ƒ^ƒCƒgƒ‹
+     }
+
+     // ƒeƒLƒXƒg’u‚«Š·‚¦ƒyƒA‚Ìİ’è‚ğ”½‰f
+     const replacePairs = settings.replacePairs || [];
+     replacePairs.forEach(function (pair) {
+       addReplacePair(pair.replaceFrom, pair.replaceTo, pair.enabled, pair.applyToAllSites);
+     });
+
+     // ƒOƒ[ƒoƒ‹İ’è‚ª‚ ‚éê‡‚Ìˆ—
+     globalSettings.forEach(function (pair) {
+       addReplacePair(pair.replaceFrom, pair.replaceTo, pair.enabled, true);
+     });
+   });
  });
 
- // ã€Œä¿å­˜ã€ãƒœã‚¿ãƒ³ãŒã‚¯ãƒªãƒƒã‚¯ã•ã‚ŒãŸã¨ãã«è¨­å®šã‚’ä¿å­˜
- saveButton.addEventListener('click', function() {
-   const newTitle = newTitleInput.value || 'Google';  // ãƒ¦ãƒ¼ã‚¶ãƒ¼ãŒä½•ã‚‚å…¥åŠ›ã—ã¦ã„ãªã‘ã‚Œã°"Google"ã‚’ä½¿ã†
-   chrome.storage.sync.set({
-     titleChangeEnabled: checkbox.checked,
-     customTitle: newTitle
-   }, function() {
-     console.log('Settings saved');
+ // V‚µ‚¢’u‚«Š·‚¦ƒyƒA‚ğ’Ç‰Á‚·‚é
+ document.getElementById('addPairButton').addEventListener('click', function () {
+   addReplacePair('', '', true, false);  // ‹ó‚ÌƒyƒA‚ğ’Ç‰Á
+ });
+
+ // ’u‚«Š·‚¦ƒyƒA‚ÌHTML‚ğ¶¬‚·‚éŠÖ”
+ function addReplacePair(replaceFrom, replaceTo, enabled, applyToAllSites) {
+   const div = document.createElement('div');
+   div.classList.add('replace-pair');
+   
+   // íœƒ{ƒ^ƒ“•t‚«‚Ì“ü—ÍƒtƒB[ƒ‹ƒh‚ğì¬
+   div.innerHTML = `
+     <div>
+       <input type="checkbox" class="replace-enabled" ${enabled ? 'checked' : ''}/>
+       •ÏX‘O: <input type="text" class="replace-from" value="${replaceFrom}" />
+       •ÏXŒã: <input type="text" class="replace-to" value="${replaceTo}" />
+       <br /><input type="checkbox" class="apply-to-all-sites" ${applyToAllSites ? 'checked' : ''}/> ‚·‚×‚Ä‚ÌƒTƒCƒg‚Å“K‰
+       <button class="removePairButton">íœ</button>
+     </div>
+   `;
+
+   // íœƒ{ƒ^ƒ“‚Ì“®ì‚ğ’Ç‰Á
+   div.querySelector('.removePairButton').addEventListener('click', function() {
+     div.remove();  // ‚±‚Ì’u‚«Š·‚¦ƒyƒA‚ğíœ
+   });
+
+   document.getElementById('replacePairs').appendChild(div);
+ }
+
+ // •Û‘¶ƒ{ƒ^ƒ“‚ªƒNƒŠƒbƒN‚³‚ê‚½‚Æ‚«‚É‘S‚Ä‚Ìİ’è‚ğƒhƒƒCƒ“‚²‚Æ‚ÉƒXƒgƒŒ[ƒW‚É•Û‘¶
+ document.getElementById('saveButton').addEventListener('click', function () {
+   const replacePairs = [];
+   const globalReplacePairs = [];
+   
+   document.querySelectorAll('.replace-pair').forEach(function (pairDiv) {
+     const replaceFrom = pairDiv.querySelector('.replace-from').value;
+     const replaceTo = pairDiv.querySelector('.replace-to').value;
+     const enabled = pairDiv.querySelector('.replace-enabled').checked;
+     const applyToAllSites = pairDiv.querySelector('.apply-to-all-sites').checked;
+
+     // ƒOƒ[ƒoƒ‹“K—p‚Ìê‡‚Í•Ê‚Ì”z—ñ‚É•Û‘¶
+     if (applyToAllSites) {
+       globalReplacePairs.push({ replaceFrom, replaceTo, enabled });
+     } else {
+       replacePairs.push({ replaceFrom, replaceTo, enabled });
+     }
+   });
+
+   // ƒ^ƒCƒgƒ‹•ÏXİ’è‚ğƒXƒgƒŒ[ƒW‚É•Û‘¶
+   const titleOption = document.querySelector('input[name="titleOption"]:checked').value;
+
+   const settings = {
+     titleChangeEnabled: document.getElementById('titleChangeCheckbox').checked,
+     customTitle: document.getElementById('newTitle').value,
+     titleOption: titleOption,
+     replacePairs: replacePairs
+   };
+
+   // ƒhƒƒCƒ“‚²‚Æ‚Ìİ’è‚ğ•Û‘¶
+   chrome.storage.sync.set({ [currentDomain]: settings }, function () {
+     console.log('Settings saved for domain:', currentDomain, settings);
+   });
+
+   // ƒOƒ[ƒoƒ‹i‘SƒTƒCƒg‚É“K—p‚·‚éİ’èj‚ğ•Û‘¶
+   chrome.storage.sync.set({ 'globalSettings': globalReplacePairs }, function () {
+     console.log('Global replace pairs saved:', globalReplacePairs);
    });
  });
 });
